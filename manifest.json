@@ -1,0 +1,10 @@
+{
+  "id": "astro-github-publisher",
+  "name": "Astro GitHub Publisher",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Publish Obsidian notes to Astro content collections in a GitHub repository.",
+  "author": "",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
