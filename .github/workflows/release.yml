@@ -30,7 +30,7 @@ jobs:
 
       - name: Validate tag matches manifest version
         run: |
-          node -e "const fs=require('fs'); const version=JSON.parse(fs.readFileSync('manifest.json','utf8')).version; const tag=process.env.GITHUB_REF_NAME; if (tag !== version) { console.error(`Tag ${tag} must match manifest version ${version}. Use a tag like ${version}, not v${version}.`); process.exit(1); }"
+          node -e 'const fs=require("fs"); const version=JSON.parse(fs.readFileSync("manifest.json","utf8")).version; const tag=process.env.GITHUB_REF_NAME; if (tag !== version) { console.error("Tag " + tag + " must match manifest version " + version + ". Use a tag like " + version + ", not v" + version + "."); process.exit(1); }'
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
