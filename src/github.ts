@@ -24,6 +24,23 @@ interface PutBinaryFileOptions {
 const API_ROOT = "https://api.github.com";
 
 export class GitHubClient {
+  async checkConnection(settings: AstroPublisherSettings): Promise<string> {
+    const response = await requestUrl({
+      url: `${this.repoUrl(settings)}/branches/${encodeURIComponent(settings.branch)}`,
+      method: "GET",
+      headers: this.headers(settings),
+      throw: false
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(readGitHubError(response.status, response.text));
+    }
+
+    const branch = response.json as { name?: string; commit?: { sha?: string } };
+    const sha = branch.commit?.sha ? branch.commit.sha.slice(0, 7) : "";
+    return `Connected to ${settings.owner}/${settings.repo}@${branch.name ?? settings.branch}${sha ? ` (${sha})` : ""}`;
+  }
+
   async putFile(options: PutFileOptions): Promise<void> {
     await this.putFileBase64({
       settings: options.settings,
@@ -130,10 +147,14 @@ export class GitHubClient {
   }
 
   private contentUrl(settings: AstroPublisherSettings, path: string): string {
-    return `${API_ROOT}/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}/contents/${path
+    return `${this.repoUrl(settings)}/contents/${path
       .split("/")
       .map(encodeURIComponent)
       .join("/")}`;
+  }
+
+  private repoUrl(settings: AstroPublisherSettings): string {
+    return `${API_ROOT}/repos/${encodeURIComponent(settings.owner)}/${encodeURIComponent(settings.repo)}`;
   }
 
   private headers(settings: AstroPublisherSettings): Record<string, string> {

@@ -1,4 +1,5 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { GitHubClient } from "./github";
 import AstroPublisherPlugin from "./main";
 import { AstroPublisherSettings } from "./types";
 
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: AstroPublisherSettings = {
 
 export class AstroPublisherSettingTab extends PluginSettingTab {
   plugin: AstroPublisherPlugin;
+  private readonly github = new GitHubClient();
 
   constructor(app: App, plugin: AstroPublisherPlugin) {
     super(app, plugin);
@@ -85,6 +87,39 @@ export class AstroPublisherSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           });
       });
+
+    const connectionStatus = containerEl.createDiv({ cls: "astro-publisher-status" });
+    this.renderConnectionStatus(connectionStatus);
+
+    new Setting(containerEl)
+      .setName("Check GitHub connection")
+      .setDesc("Verify the owner, repository, branch, and token can be accessed without writing to GitHub.")
+      .addButton((button) =>
+        button
+          .setButtonText("Check connection")
+          .setCta()
+          .onClick(async () => {
+            button.setDisabled(true).setButtonText("Checking...");
+            connectionStatus.setText("Checking GitHub connection...");
+
+            try {
+              const missing = this.getMissingGitHubSettings();
+              if (missing.length > 0) {
+                throw new Error(`Missing settings: ${missing.join(", ")}`);
+              }
+
+              const message = await this.github.checkConnection(this.plugin.settings);
+              connectionStatus.setText(message);
+              new Notice(message);
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              connectionStatus.setText(`Connection failed: ${message}`);
+              new Notice(`GitHub connection failed: ${message}`, 8000);
+            } finally {
+              button.setDisabled(false).setButtonText("Check connection");
+            }
+          })
+      );
 
     new Setting(containerEl)
       .setName("Default content type")
@@ -209,6 +244,35 @@ export class AstroPublisherSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+  }
+
+  private renderConnectionStatus(containerEl: HTMLElement): void {
+    const owner = this.plugin.settings.owner || "owner";
+    const repo = this.plugin.settings.repo || "repo";
+    const branch = this.plugin.settings.branch || "branch";
+    containerEl.setText(`Configured target: ${owner}/${repo}@${branch}`);
+  }
+
+  private getMissingGitHubSettings(): string[] {
+    const missing: string[] = [];
+
+    if (!this.plugin.settings.owner) {
+      missing.push("GitHub owner");
+    }
+
+    if (!this.plugin.settings.repo) {
+      missing.push("GitHub repository");
+    }
+
+    if (!this.plugin.settings.branch) {
+      missing.push("branch");
+    }
+
+    if (!this.plugin.settings.token) {
+      missing.push("GitHub token");
+    }
+
+    return missing;
   }
 }
 
