@@ -248,7 +248,7 @@ function buildPublishFields(target: ReturnType<typeof buildPublishTarget>): Reco
     astroPath: target.path
   };
 
-  if (target.slug) {
+  if (target.contentType === "essay" && target.slug) {
     fields.slug = target.slug;
   }
 

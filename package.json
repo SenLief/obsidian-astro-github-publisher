@@ -1,6 +1,6 @@
 {
   "name": "obsidian-astro-github-publisher",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Manage and publish Astro blog content from Obsidian via GitHub.",
   "main": "main.js",
   "scripts": {

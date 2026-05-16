@@ -89,7 +89,6 @@ After publishing, the callout gets hidden metadata so re-running the command upd
 ```md
 > [!astro-bits]
 > <!-- astroPath: src/content/bits/bits-2026-05-12-1200.md -->
-> <!-- slug: jin-tian-zai-shen-zhen -->
 > <!-- publishedAt: 2026-05-12T12:00:00+08:00 -->
 >
 > 今天在深圳读到一段很好的文字。
@@ -108,7 +107,7 @@ tags:
   - "loc:深圳"
   - "阅读"
 images:
-  - src: "bits/jin-tian-zai-shen-zhen/yue-du-xian-chang.webp"
+  - src: "bits/bits-2026-05-12-1200/yue-du-xian-chang.webp"
     width: 800
     height: 800
 ---

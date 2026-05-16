@@ -1,12 +1,10 @@
 import { App, TFile } from "obsidian";
 import { processBitsThemeImages, ThemeImage } from "./images";
-import { toKebabSlug } from "./slug";
 import { AstroPublisherSettings } from "./types";
 
 export interface BitsPublishItem {
   content: string;
   path: string;
-  slug: string;
   date: string;
   tags: string[];
   images: ThemeImage[];
@@ -45,10 +43,9 @@ export async function buildBitsPublishItems(
     const tags = extractTags(rawContent);
     const contentWithoutTags = stripStandaloneTagLines(rawContent);
     const date = block.meta.publishedAt ?? buildLocalDateTime(file, index);
-    const slug = block.meta.slug ?? toKebabSlug(firstMeaningfulText(contentWithoutTags));
-    const path = block.meta.astroPath ?? buildBitsPath(settings, date, slug, usedPaths);
+    const path = block.meta.astroPath ?? buildBitsPath(settings, date, usedPaths);
     usedPaths.add(path);
-    const processed = await processBitsThemeImages(app, file, contentWithoutTags, slug, settings);
+    const processed = await processBitsThemeImages(app, file, contentWithoutTags, fileSlug(path), settings);
     const markdown = stringifyBitsMarkdown({
       date,
       tags,
@@ -59,7 +56,6 @@ export async function buildBitsPublishItems(
     items.push({
       content: markdown,
       path,
-      slug,
       date,
       tags,
       images: processed.images,
@@ -71,7 +67,6 @@ export async function buildBitsPublishItems(
       endLine: block.endLine,
       replacement: stringifyBitsCallout(block.lines, {
         astroPath: path,
-        slug,
         publishedAt: date
       })
     });
@@ -150,7 +145,6 @@ function stringifyBitsCallout(lines: string[], meta: Record<string, string>): st
   const contentLines = stripMetaComments(lines.join("\n")).replace(/^\n+/, "").split("\n");
   const metaLines = [
     `<!-- astroPath: ${meta.astroPath} -->`,
-    `<!-- slug: ${meta.slug} -->`,
     `<!-- publishedAt: ${meta.publishedAt} -->`,
     ""
   ];
@@ -193,7 +187,6 @@ function stringifyBitsMarkdown(options: {
 function buildBitsPath(
   settings: AstroPublisherSettings,
   date: string,
-  _slug: string,
   usedPaths: Set<string>
 ): string {
   const stamp = date.slice(0, 16).replace("T", "-").replace(":", "");
@@ -206,6 +199,11 @@ function buildBitsPath(
   }
 
   return path;
+}
+
+function fileSlug(path: string): string {
+  const fileName = path.split("/").pop() ?? "bit";
+  return fileName.replace(/\.md$/i, "") || "bit";
 }
 
 function buildLocalDateTime(file: TFile, index: number): string {
@@ -231,17 +229,6 @@ function formatLocalDateTime(date: Date): string {
 
 function pad(value: number): string {
   return value.toString().padStart(2, "0");
-}
-
-function firstMeaningfulText(value: string): string {
-  const text = value
-    .replace(/!\[\[[^\]]+\]\]/g, "")
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, "")
-    .replace(/#[^\s#]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return text.slice(0, 36) || "bit";
 }
 
 function extractTags(value: string): string[] {
